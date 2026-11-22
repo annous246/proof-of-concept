@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 
 const LINKS = [
@@ -10,18 +10,29 @@ const LINKS = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key !== "Escape") return;
+      if (drawerRef.current?.getAttribute("aria-hidden") === "false") {
+        burgerRef.current?.focus();
+      }
+      setOpen(false);
+    };
+    const onResize = () => {
+      if (window.innerWidth >= 768) setOpen(false);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -41,6 +52,7 @@ export default function Navbar() {
         </nav>
   
         <button
+          ref={burgerRef}
           type="button"
           className={`${styles.burger} ${open ? styles.burgerOpen : ""}`}
           aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
@@ -60,6 +72,7 @@ export default function Navbar() {
       />
 
       <aside
+        ref={drawerRef}
         id="drawer"
         className={`${styles.drawer} ${open ? styles.drawerOpen : ""}`}
         aria-hidden={!open}
