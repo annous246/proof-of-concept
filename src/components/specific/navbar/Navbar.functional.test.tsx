@@ -138,4 +138,37 @@ describe("Navbar functional", () => {
     expect(getBurger()).toHaveAttribute("aria-expanded", "false");
     expect(getBurger()).toHaveFocus();
   });
+
+  it("removes the resize listener on unmount", () => {
+    const add = vi.spyOn(window, "addEventListener");
+    const remove = vi.spyOn(window, "removeEventListener");
+    const { unmount } = render(<Navbar />);
+    const added = add.mock.calls.find((c) => c[0] === "resize");
+    expect(added).toBeDefined();
+    unmount();
+    expect(remove.mock.calls.some((c) => c[0] === "resize" && c[1] === added![1])).toBe(true);
+    add.mockRestore();
+    remove.mockRestore();
+  });
+
+  it("resizing to desktop while the drawer is closed is a no-op", () => {
+    render(<Navbar />);
+    Object.defineProperty(window, "innerWidth", { value: 1024, configurable: true });
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(getBurger()).toHaveAttribute("aria-expanded", "false");
+    expect(getBurger()).not.toHaveFocus();
+  });
+
+  it("Escape with the drawer closed does not move focus to the burger", async () => {
+    const user = userEvent.setup();
+    render(<Navbar />);
+    const logo = document.querySelector("header a") as HTMLElement;
+    logo.focus();
+    await user.keyboard("{Escape}");
+    expect(logo).toHaveFocus();
+    expect(getBurger()).not.toHaveFocus();
+    expect(getBurger()).toHaveAttribute("aria-expanded", "false");
+  });
 });
