@@ -1,0 +1,4 @@
+style/
+node_modules/
+dist/
+.env*
